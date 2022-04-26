@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\App;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,20 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
+Route::get('/{locale}', function ($locale) {
+    if (! in_array($locale, ['en', 'ur'])) {
+        abort(400);
+    }
+    App::setLocale($locale);
     return view('welcome');
 });
+
+Route::get('/{locale}/dashboard', function ($locale) {
+    if (! in_array($locale, ['en', 'ur'])) {
+        abort(400);
+    }
+    App::setLocale($locale);
+    return view('dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+require __DIR__.'/auth.php';
