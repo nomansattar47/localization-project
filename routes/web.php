@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\App;
+use Laravel\Socialite\Facades\Socialite;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,19 +16,36 @@ use Illuminate\Support\Facades\App;
 |
 */
 
-Route::get('/{locale}', function ($locale) {
-    if (! in_array($locale, ['en', 'ur'])) {
-        abort(400);
-    }
-    App::setLocale($locale);
+Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/{locale}/dashboard', function ($locale) {
-    if (! in_array($locale, ['en', 'ur'])) {
-        abort(400);
-    }
-    App::setLocale($locale);
+Route::get('/auth/redirect', function () {
+    return Socialite::driver('github')->redirect();
+});
+ 
+Route::get('/auth/callback', function () {
+    $githubUser = Socialite::driver('github')->user();
+ 
+    // echo 'Github User Token: ' . $githubUser->token;
+
+    $user = User::updateOrCreate([
+        'github_id' => $githubUser->id,
+    ], [
+        'name' => $githubUser->name,
+        'email' => $githubUser->email,
+        'password' => Hash::make('abcd'),
+        'github_token' => $githubUser->token,
+        'github_refresh_token' => $githubUser->refreshToken,
+    ]);
+ 
+    Auth::login($user);
+ 
+    return redirect('/dashboard');
+
+});
+
+Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
 
